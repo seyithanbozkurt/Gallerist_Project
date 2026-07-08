@@ -1,0 +1,9 @@
+package com.example.gallerist.controller;
+
+import com.example.gallerist.dto.AuthRequest;
+import com.example.gallerist.dto.DtoUser;
+
+public interface IRestAuthenticationController {
+
+    public RootEntity<DtoUser> register(AuthRequest authRequest);
+}
