@@ -1,16 +1,27 @@
 package com.example.gallerist.service.impl;
 
+import com.example.gallerist.Exception.BaseException;
+import com.example.gallerist.Exception.ErrorMessage;
+import com.example.gallerist.Exception.MessageType;
 import com.example.gallerist.dto.AuthRequest;
+import com.example.gallerist.dto.AuthResponse;
 import com.example.gallerist.dto.DtoUser;
+import com.example.gallerist.jwt.JWTService;
+import com.example.gallerist.model.RefreshToken;
 import com.example.gallerist.model.User;
+import com.example.gallerist.repository.RefreshTokenRepository;
 import com.example.gallerist.repository.UserRepository;
 import com.example.gallerist.service.IAuthenticationService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class AuthenticationService implements IAuthenticationService {
@@ -21,12 +32,31 @@ public class AuthenticationService implements IAuthenticationService {
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
+    @Autowired
+    private AuthenticationProvider authenticationProvider;
+
+    @Autowired
+    private JWTService  jwtService;
+
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
     private User createUser(AuthRequest input) {
         User user = new User();
         user.setCreateTime(new Date());
         user.setUsername(input.getUsername());
         user.setPassword(passwordEncoder.encode(input.getPassword()));
         return user;
+    }
+
+    private RefreshToken createRefreshToken(User user) {
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setCreateTime(new Date());
+        refreshToken.setExpiredDate((new Date(System.currentTimeMillis() + 1000*60*60*4)));
+        refreshToken.setRefreshToken(UUID.randomUUID().toString());
+        refreshToken.setUser(user);
+        return refreshToken;
+
     }
 
     @Override
@@ -38,5 +68,25 @@ public class AuthenticationService implements IAuthenticationService {
         BeanUtils.copyProperties(userSaved, dtoUser);
 
         return dtoUser;
+    }
+
+    @Override
+    public AuthResponse authenticate(AuthRequest input) {
+        try {
+            UsernamePasswordAuthenticationToken authenticationToken =
+                    new UsernamePasswordAuthenticationToken(input.getUsername(), input.getPassword());
+            authenticationProvider.authenticate(authenticationToken);
+
+          Optional<User> optUser  = userRepository.findByUsername(input.getUsername());
+
+            String accessToken = jwtService.generateToken(optUser.get());
+            RefreshToken savedRefreshToken = refreshTokenRepository.save(createRefreshToken(optUser.get()));
+
+            return new AuthResponse(accessToken, savedRefreshToken.getRefreshToken());
+
+
+        }catch (Exception e){
+            throw  new BaseException(new ErrorMessage(MessageType.USERNAME_OR_PASSWORD_ERROR, e.getMessage()));
+        }
     }
 }

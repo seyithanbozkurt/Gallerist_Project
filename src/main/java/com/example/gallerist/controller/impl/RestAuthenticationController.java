@@ -4,6 +4,7 @@ import com.example.gallerist.controller.IRestAuthenticationController;
 import com.example.gallerist.controller.RestBaseController;
 import com.example.gallerist.controller.RootEntity;
 import com.example.gallerist.dto.AuthRequest;
+import com.example.gallerist.dto.AuthResponse;
 import com.example.gallerist.dto.DtoUser;
 import com.example.gallerist.service.IAuthenticationService;
 import com.example.gallerist.service.impl.AuthenticationService;
@@ -23,5 +24,11 @@ public class RestAuthenticationController extends RestBaseController implements 
     @Override
     public RootEntity<DtoUser> register(@Valid @RequestBody AuthRequest authRequest) {
         return ok(authenticationService.register(authRequest));
+    }
+
+    @PostMapping("/authenticate")
+    @Override
+    public RootEntity<AuthResponse> authenticate(@Valid @RequestBody AuthRequest input) {
+        return ok(authenticationService.authenticate(input));
     }
 }
