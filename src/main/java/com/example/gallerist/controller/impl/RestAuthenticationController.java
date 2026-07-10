@@ -6,6 +6,7 @@ import com.example.gallerist.controller.RootEntity;
 import com.example.gallerist.dto.AuthRequest;
 import com.example.gallerist.dto.AuthResponse;
 import com.example.gallerist.dto.DtoUser;
+import com.example.gallerist.dto.RefreshTokenRequest;
 import com.example.gallerist.service.IAuthenticationService;
 import com.example.gallerist.service.impl.AuthenticationService;
 import jakarta.validation.Valid;
@@ -30,5 +31,12 @@ public class RestAuthenticationController extends RestBaseController implements 
     @Override
     public RootEntity<AuthResponse> authenticate(@Valid @RequestBody AuthRequest input) {
         return ok(authenticationService.authenticate(input));
+    }
+
+    @PostMapping("/refreshToken")
+    @Override
+    public RootEntity<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest input) {
+
+        return ok(authenticationService.refreshToken(input));
     }
 }

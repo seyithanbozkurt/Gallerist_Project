@@ -27,7 +27,7 @@ public class JWTService {
 
     }
 
-    public <T> T exporToken(String token, Function<Claims, T> claimsFunc) {
+    public <T> T exportToken(String token, Function<Claims, T> claimsFunc) {
         Claims claims = getClaims(token);
         return claimsFunc.apply(claims);
     }
@@ -39,11 +39,13 @@ public class JWTService {
                 .parseClaimsJws(token).getBody();
     }
 
-    public String getUsername(String token) {
-        return exporToken(token, Claims::getSubject);
+    public String getUsernameByToken(String token) {
+
+        return exportToken(token, Claims::getSubject);
     }
-    public boolean isTokenExpired(String token) {
-        Date expireDate = exporToken(token, Claims::getExpiration);
+
+    public boolean isTokenValid(String token) {
+        Date expireDate = exportToken(token, Claims::getExpiration);
         return new Date().before(new Date());
     }
 

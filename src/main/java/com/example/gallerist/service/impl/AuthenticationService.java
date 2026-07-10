@@ -6,6 +6,7 @@ import com.example.gallerist.Exception.MessageType;
 import com.example.gallerist.dto.AuthRequest;
 import com.example.gallerist.dto.AuthResponse;
 import com.example.gallerist.dto.DtoUser;
+import com.example.gallerist.dto.RefreshTokenRequest;
 import com.example.gallerist.jwt.JWTService;
 import com.example.gallerist.model.RefreshToken;
 import com.example.gallerist.model.User;
@@ -88,5 +89,27 @@ public class AuthenticationService implements IAuthenticationService {
         }catch (Exception e){
             throw  new BaseException(new ErrorMessage(MessageType.USERNAME_OR_PASSWORD_ERROR, e.getMessage()));
         }
+    }
+
+    public boolean isValidRefreshToken(Date expiredDate){
+        return new Date().before(expiredDate);
+    }
+
+    @Override
+    public AuthResponse refreshToken(RefreshTokenRequest input) {
+        Optional<RefreshToken> optRefreshToken = refreshTokenRepository.findByRefreshToken(input.getRefreshToken());
+        if (optRefreshToken.isEmpty()) {
+            throw  new BaseException(new ErrorMessage(MessageType.REFRESH_TOKEN_NOT_FOUND, input.getRefreshToken()));
+        }
+
+        if (!isValidRefreshToken(optRefreshToken.get().getExpiredDate())){
+            throw  new BaseException(new ErrorMessage(MessageType.REFRESH_TOKEN_EXPIRED, input.getRefreshToken()));
+        }
+        User user = optRefreshToken.get().getUser();
+        String accessToken = jwtService.generateToken(user);
+        RefreshToken savedRefreshToken = refreshTokenRepository.save(createRefreshToken(user));
+
+
+        return new AuthResponse(accessToken, savedRefreshToken.getRefreshToken());
     }
 }
