@@ -46,7 +46,7 @@ public class JWTService {
 
     public boolean isTokenValid(String token) {
         Date expireDate = exportToken(token, Claims::getExpiration);
-        return new Date().before(new Date());
+        return new Date().before(expireDate);
     }
 
 
